@@ -1,0 +1,305 @@
+import React, { createContext, useContext, useState, useEffect } from "react";
+import axios from "axios";
+import { useAuth } from "../context/AuthContext";
+
+// Use environment variable for API URL if available, otherwise use the hardcoded URL
+const API_URL = import.meta.env.VITE_API_URL || "https://play-learn-code-backend.onrender.com";
+
+console.log('JavaPointsContext using API URL:', API_URL);
+
+// Create a custom axios instance with default config
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true // Set to true to work with credentials in CORS
+});
+
+const JavaPointsContext = createContext();
+
+// Define the Java chapter structure based on the java.jsx file
+const JAVA_CHAPTERS = {
+  'beginner': {
+    title: 'Beginner (Introduction to Coding)',
+    subtopics: ['printing-output', 'basic-syntax'],
+    nextChapter: 'variables'
+  },
+  'variables': {
+    title: 'Variables & Data Types',
+    subtopics: ['variables', 'data-types', 'type-casting'],
+    nextChapter: 'conditionals'
+  },
+  'conditionals': {
+    title: 'Conditional Statements',
+    subtopics: ['if-else', 'switch'],
+    nextChapter: 'loops'
+  },
+  'loops': {
+    title: 'Loops & Iteration',
+    subtopics: ['for-loop', 'while-loop'],
+    nextChapter: 'exceptions'
+  },
+  'exceptions': {
+    title: 'Exception Handling',
+    subtopics: ['exception'],
+    nextChapter: 'arrays'
+  },
+  'arrays': {
+    title: 'Arrays & Lists',
+    subtopics: ['array'],
+    nextChapter: 'oops'
+  },
+  'oops': {
+    title: 'Object-Oriented Programming (OOP)',
+    subtopics: ['ClassesAndObjects', 'inheritance', 'encapsulation', 'constructors'],
+    nextChapter: 'collections'
+  },
+  'collections': {
+    title: 'Collections',
+    subtopics: ['ArrayGame', 'HashMapGame'],
+    nextChapter: null
+  }
+};
+
+export const JavaPointsProvider = ({ children }) => {
+  const [points, setPoints] = useState(() => {
+    const saved = localStorage.getItem('eduarena_total_points');
+    return saved ? parseInt(saved) : 0;
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const { currentUser } = useAuth();
+
+  // Game progress state
+  const [javaGameProgress, setJavaGameProgress] = useState(() => {
+    const savedProgress = localStorage.getItem('javaGameProgress');
+    if (savedProgress) {
+      return JSON.parse(savedProgress);
+    }
+
+    // Initialize all games as not completed
+    const initialProgress = {};
+    Object.values(JAVA_CHAPTERS).forEach(chapter => {
+      chapter.subtopics.forEach(subtopic => {
+        initialProgress[subtopic] = false;
+      });
+    });
+    return initialProgress;
+  });
+
+  // Handle User Change/Logout Reset
+  useEffect(() => {
+    if (!currentUser) {
+      console.log("JavaPointsContext - Resetting state on logout");
+      setPoints(0);
+      const initialProgress = {};
+      Object.values(JAVA_CHAPTERS).forEach(chapter => {
+        chapter.subtopics.forEach(subtopic => {
+          initialProgress[subtopic] = false;
+        });
+      });
+      setJavaGameProgress(initialProgress);
+      return;
+    }
+
+    const fetchPoints = async () => {
+      setIsLoading(true);
+      try {
+        console.log("JavaPointsContext - Syncing points for user:", currentUser._id);
+        const backendPoints = currentUser.points || 0;
+        
+        // If we have local points from a GUEST session, we can optionally sync them here
+        // But for isolation, it's safer to use the backend points exclusively when logged in
+        setPoints(backendPoints);
+        localStorage.setItem('eduarena_total_points', backendPoints.toString());
+      } catch (error) {
+        console.error("JavaPointsContext - Error fetching points:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPoints();
+  }, [currentUser]);
+
+  // Save game progress to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('javaGameProgress', JSON.stringify(javaGameProgress));
+  }, [javaGameProgress]);
+
+  const addPoints = async (value) => {
+    try {
+      console.log("JavaPointsContext - Adding points:", value);
+      const newPoints = points + value;
+      setPoints(newPoints);
+      localStorage.setItem('eduarena_total_points', newPoints.toString());
+      if (currentUser) {
+        await updatePointsInDB(newPoints);
+      }
+      console.log("JavaPointsContext - Points updated successfully:", newPoints);
+    } catch (error) {
+      console.error("JavaPointsContext - Error adding points:", error);
+      // Points are still saved in localStorage even if backend fails
+    }
+  };
+
+  const deductPoints = async (value) => {
+    if (points < value) return false; // Not enough points
+
+    try {
+      console.log("JavaPointsContext - Deducting points:", value);
+      const newPoints = points - value;
+      setPoints(newPoints);
+      localStorage.setItem('eduarena_total_points', newPoints.toString());
+      if (currentUser) {
+        await updatePointsInDB(newPoints);
+      }
+      console.log("JavaPointsContext - Points deducted successfully:", newPoints);
+      return true;
+    } catch (error) {
+      console.error("JavaPointsContext - Error deducting points:", error);
+      return false;
+    }
+  };
+
+  const updatePointsInDB = async (newPoints) => {
+    if (!currentUser) {
+      console.log("JavaPointsContext - Cannot update points in DB: No user logged in");
+      return;
+    }
+
+    try {
+      console.log("JavaPointsContext - Updating points in DB:", {
+        userId: currentUser._id,
+        points: newPoints
+      });
+
+      // Get the token from localStorage
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Set the Authorization header
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+
+      const response = await api.post(`/user/updatePoints`, {
+        userId: currentUser._id,
+        points: newPoints
+      });
+
+      console.log("JavaPointsContext - Points update response:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("JavaPointsContext - Failed to update points in DB:", error);
+      throw error;
+    }
+  };
+
+  // Game progress functions
+  const markGameAsCompleted = (gameId) => {
+    setJavaGameProgress(prev => {
+      const newProgress = {
+        ...prev,
+        [gameId]: true
+      };
+      console.log('Marking Java game as completed:', gameId);
+      console.log('New Java progress state:', newProgress);
+      return newProgress;
+    });
+  };
+
+  const isGameUnlocked = (gameId) => {
+    // Points required for each game
+    const pointsRequired = {
+      // Beginner games
+      'printing-output': 0,    // Always unlocked
+      'basic-syntax': 10,      // Unlocked at 10 points
+      'variables': 20,         // Unlocked at 20 points
+      'data-types': 30,        // Unlocked at 30 points
+      'type-casting': 40,      // Unlocked at 40 points
+
+      // Conditionals
+      'if-else': 50,           // Unlocked at 50 points
+      'switch': 60,            // Unlocked at 60 points
+
+      // Loops
+      'for-loop': 70,          // Unlocked at 70 points
+      'while-loop': 80,        // Unlocked at 80 points
+
+      // Exceptions
+      'exception': 90,         // Unlocked at 90 points
+
+      // Arrays
+      'array': 100,            // Unlocked at 100 points
+
+      // OOPS
+      'ClassesAndObjects': 110,  // Unlocked at 110 points
+      'inheritance': 120,        // Unlocked at 120 points
+      'encapsulation': 130,      // Unlocked at 130 points
+      'constructors': 140,       // Unlocked at 140 points
+
+      // Collections
+      'ArrayGame': 150,         // Unlocked at 150 points
+      'HashMapGame': 160,       // Unlocked at 160 points
+    };
+
+    // If the game is not in our points list, assume it's unlocked
+    if (!(gameId in pointsRequired)) {
+      return true;
+    }
+
+    // Check if user has enough points to unlock the game
+    return points >= pointsRequired[gameId];
+  };
+
+  const getGameStatus = (gameId) => {
+    const status = {
+      isCompleted: javaGameProgress[gameId] === true,
+      isUnlocked: isGameUnlocked(gameId)
+    };
+    console.log(`Java game status for ${gameId}:`, status);
+    return status;
+  };
+
+  const getChapterProgress = (chapterId) => {
+    const chapter = JAVA_CHAPTERS[chapterId];
+    if (!chapter) return null;
+
+    const completedSubtopics = chapter.subtopics.filter(
+      subtopic => javaGameProgress[subtopic]
+    );
+
+    return {
+      title: chapter.title,
+      totalSubtopics: chapter.subtopics.length,
+      completedSubtopics: completedSubtopics.length,
+      isChapterComplete: completedSubtopics.length === chapter.subtopics.length,
+      nextChapter: chapter.nextChapter
+    };
+  };
+
+  const value = {
+    points,
+    isLoading,
+    addPoints,
+    deductPoints,
+    // Game progress functions
+    javaGameProgress,
+    markGameAsCompleted,
+    isGameUnlocked,
+    getGameStatus,
+    getChapterProgress,
+    JAVA_CHAPTERS
+  };
+
+  return (
+    <JavaPointsContext.Provider value={value}>
+      {children}
+    </JavaPointsContext.Provider>
+  );
+};
+
+export const useJavaPoints = () => {
+  return useContext(JavaPointsContext);
+};

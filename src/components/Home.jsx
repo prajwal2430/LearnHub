@@ -1,0 +1,390 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import ProgressBar from './ProgressBar';
+import { useJavaPoints } from '../Java/JavaPointsContext';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
+
+const Home = () => {
+  const [loading, setLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
+  const location = useLocation();
+  const { currentUser } = useAuth();
+  const { points } = useJavaPoints();
+
+  useEffect(() => {
+    // Simulate loading time for a smoother transition
+    const timer = setTimeout(() => {
+      setLoading(false);
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    // Fetch progress based on points or any other logic
+    if (currentUser) {
+      // Assuming you have a function to calculate progress based on points
+      const calculateProgress = (points) => {
+        // Example calculation: max points could be 100
+        return Math.round((points / 170) * 100); // Adjust this logic as needed
+      };
+
+      setProgress(calculateProgress(points));
+    }
+  }, [currentUser, points]); // Re-run when currentUser or points change
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-violet-950 text-white overflow-hidden relative">
+        <div className="container mx-auto px-4 py-16 relative z-10">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 min-h-[80vh] mt-2">
+            <div className="w-full md:w-1/2 text-center md:text-left space-y-6 animate-shimmer-diagonal">
+              <Skeleton height={40} width={200}  baseColor="#3b0764" highlightColor="#9333ea" />
+              <Skeleton height={80} width="80%" baseColor="#3b0764" highlightColor="#9333ea" />
+              <Skeleton height={40} width="70%" baseColor="#3b0764" highlightColor="#9333ea" />
+              <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                <Skeleton height={50} width={150} baseColor="#3b0764" highlightColor="#9333ea" />
+                <Skeleton height={50} width={150} baseColor="#3b0764" highlightColor="#9333ea" />
+              </div>
+            </div>
+            <div className='w-[45%] h-[400px]'>
+            <Skeleton height="100%" width="100%" baseColor="#3b0764" highlightColor="#9333ea"/>
+            </div>
+    
+          </div>
+          
+          <div className="mt-16">
+            <Skeleton height={40} width={300} baseColor="#3b0764" highlightColor="#9333ea" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-8">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10">
+                  <Skeleton height={60} width={60} circle baseColor="#3b0764" highlightColor="#9333ea" />
+                  <Skeleton height={30} width="70%" className="mt-4" baseColor="#3b0764" highlightColor="#9333ea" />
+                  <Skeleton count={2} className="mt-2" baseColor="#3b0764" highlightColor="#9333ea" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-indigo-950 via-purple-900 to-violet-950 text-white overflow-hidden relative">
+      {/* Animated code particles */}
+      <div className="absolute inset-0 opacity-20">
+        <div className="absolute top-1/4 left-1/4 animate-float-slow">
+          <div className="text-3xl font-mono opacity-50">{"<div>"}</div>
+        </div>
+        <div className="absolute top-1/3 right-1/4 animate-float">
+          <div className="text-2xl font-mono opacity-50">{"function() {"}</div>
+        </div>
+        <div className="absolute bottom-1/4 left-1/3 animate-float-slow">
+          <div className="text-xl font-mono opacity-50">{"const code = 'fun';"}</div>
+        </div>
+        <div className="absolute top-2/3 right-1/3 animate-float">
+          <div className="text-2xl font-mono opacity-50">{"}"}</div>
+        </div>
+        <div className="absolute bottom-1/3 left-1/5 animate-float">
+          <div className="text-xl font-mono opacity-50">{"return <Magic />;"}</div>
+        </div>
+      </div>
+
+      {/* Glowing orb effects */}
+      <div className="absolute top-1/4 -right-20 w-96 h-96 bg-purple-500 rounded-full filter blur-3xl opacity-20 animate-pulse-slow"></div>
+      <div className="absolute -bottom-32 -left-20 w-96 h-96 bg-indigo-500 rounded-full filter blur-3xl opacity-20 animate-pulse-slow"></div>
+
+      <div className="container px-4 py-16 relative z-10">
+        {/* Hero Section */}
+        {location.pathname === '/' && (
+          <div className="flex flex-col md:flex-row items-center justify-between gap-8 min-h-[80vh] mt-2 ml-4">
+            <div className="w-full md:w-1/2 text-center md:text-left space-y-6">
+              {currentUser ? (
+                <>
+                  <div className="inline-block mb-4 bg-gradient-to-r from-indigo-400 to-purple-500 p-1 rounded-lg">
+                    <div className="bg-indigo-950/50 backdrop-blur-sm px-4 py-2 rounded">
+                      <span className="text-sm font-medium">LOGGED IN AS</span>
+                    </div>
+                  </div>
+                  <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+                    Welcome back, {currentUser.username || 'Aspirant'}!
+                  </h1>
+                  <p className="text-xl md:text-2xl mb-8 text-purple-100">
+                    Continue your placement preparation with interactive challenges
+                  </p>
+                  <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                    <Link to="/learn" className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all hover:-translate-y-1">
+                      Resume Learning
+                    </Link>
+                    <Link to="/profile" className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg hover:bg-white/20 transition-all">
+                      View Progress
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="inline-block mb-4 bg-gradient-to-r from-indigo-400 to-purple-500 p-1 rounded-lg">
+                    <div className="bg-indigo-950/50 backdrop-blur-sm px-4 py-2 rounded">
+                      <span className="text-sm font-medium">INTERACTIVE LEARNING</span>
+                    </div>
+                  </div>
+                  <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+                    Master Aptitude for Placements
+                  </h1>
+                  <p className="text-xl md:text-2xl mb-8 text-purple-100">
+                    Crack your dream company with interactive logical, verbal, and quant challenges
+                  </p>
+                  <div className="flex flex-wrap gap-4 justify-center md:justify-start">
+                    <Link to="/signup" className="px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all hover:-translate-y-1">
+                      Get Started
+                    </Link>
+                    <Link to="/learn" className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl font-bold text-lg hover:bg-white/20 transition-all">
+                      Explore Courses
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* 3D Aptitude Puzzle Illustration */}
+            <div className="w-full md:w-1/2 flex justify-center">
+              <div className="relative w-full max-w-lg aspect-square">
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl transform rotate-6 scale-95 opacity-20 blur-xl animate-pulse"></div>
+                <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl transform -rotate-3 scale-90 opacity-20 blur-xl animate-pulse-slow"></div>
+                <div className="relative h-full w-full bg-gradient-to-br from-gray-900 to-indigo-950 rounded-2xl p-6 border border-indigo-500/30 shadow-xl overflow-hidden flex flex-col justify-between">
+                  {/* Top Bar */}
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-400"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-400"></div>
+                    <div className="ml-4 text-xs text-gray-400 font-mono">BrainTeaser.puzzle</div>     
+                  </div>
+                  
+                  {/* Puzzle Content */}
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+                    <div className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-500 animate-pulse">
+                      If 2 = 6, 3 = 12, 4 = 20
+                    </div>
+                    <div className="text-2xl text-purple-200">
+                      Then 5 = <span className="text-white border-b-2 border-dashed border-white w-12 inline-block text-center animate-pulse">?</span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 mt-8 w-full">
+                      <div className="bg-white/10 p-3 rounded-lg text-center font-bold text-white hover:bg-white/20 cursor-pointer transition-all">
+                        A) 24
+                      </div>
+                      <div className="bg-white/10 p-3 rounded-lg text-center font-bold text-white border-2 border-transparent hover:border-green-400 hover:text-green-400 cursor-pointer transition-all">
+                        B) 30
+                      </div>
+                      <div className="bg-white/10 p-3 rounded-lg text-center font-bold text-white hover:bg-white/20 cursor-pointer transition-all">
+                        C) 32
+                      </div>
+                      <div className="bg-white/10 p-3 rounded-lg text-center font-bold text-white hover:bg-white/20 cursor-pointer transition-all">
+                        D) 40
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="flex mt-6 items-center">
+                    <span className="text-green-400 mr-2 text-xl">✓</span>
+                    <span className="text-gray-300 text-sm">
+                      Speed Math: Logic identified — <code>x * (x + 1)</code>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Features Section */}
+        <div className="mt-16 bg-white/5 backdrop-blur-lg rounded-2xl p-8">
+          <h2 className="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+            Why Choose AptiQuest?
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10 transition-all duration-300 hover:-translate-y-1">
+              <div className="text-4xl mb-4 transform transition-transform duration-300 hover:scale-110">🎮</div>
+              <h3 className="text-xl font-semibold mb-2 text-white">Gamified Learning</h3>
+              <p className="text-purple-100">
+                Learn through interactive challenges and earn points as you progress
+              </p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10 transition-all duration-300 hover:-translate-y-1">
+              <div className="text-4xl mb-4 transform transition-transform duration-300 hover:scale-110">🏆</div>
+              <h3 className="text-xl font-semibold mb-2 text-white">Achievement System</h3>
+              <p className="text-purple-100">
+                Unlock badges and climb the leaderboard as you master Java concepts
+              </p>
+            </div>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/10 transition-all duration-300 hover:-translate-y-1">
+              <div className="text-4xl mb-4 transform transition-transform duration-300 hover:scale-110">📚</div>
+              <h3 className="text-xl font-semibold mb-2 text-white">Structured Learning</h3>
+              <p className="text-purple-100">
+                Follow a carefully designed curriculum from basics to advanced topics
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Programming Languages Section */}
+        <div className="mt-16">
+          <h2 className="text-3xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+            Choose Your Aptitude Topic
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Quant Card */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 transition-all duration-300 hover:-translate-y-1">
+              <div className="relative h-32 bg-gradient-to-r from-blue-500 to-blue-600">
+                <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+                  <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110">
+                    <img 
+                      src="https://img.icons8.com/color/96/000000/math.png" 
+                      alt="Quant Logo" 
+                      className="w-20 h-20"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="pt-16 pb-6 px-6 text-center">
+                <h3 className="text-2xl font-bold mb-4 text-white">Quantitative Aptitude</h3>
+                <p className="text-purple-100 mb-6">
+                  Master mathematics, numbers, probabilities, and formulas required to clear top company cutoffs.
+                </p>
+                <Link to="/learn" className="inline-block px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all hover:-translate-y-1">
+                  Start Learning
+                </Link>
+              </div>
+            </div>
+
+            {/* Logical Reasoning Card */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 transition-all duration-300 hover:-translate-y-1">
+              <div className="relative h-32 bg-gradient-to-r from-purple-500 to-purple-800">
+                <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+                  <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110">
+                    <img 
+                      src="https://img.icons8.com/color/96/000000/brain.png" 
+                      alt="Logic Logo" 
+                      className="w-20 h-20"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="pt-16 pb-6 px-6 text-center">
+                <h3 className="text-2xl font-bold mb-4 text-white">Logical Reasoning</h3>
+                <p className="text-purple-100 mb-6">
+                  Boost your critical thinking with puzzles, syllogisms, blood relations, and sequence completions.
+                </p>
+                <Link to="/learn/reasoning" className="inline-block px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all hover:-translate-y-1">
+                  Start Learning
+                </Link>
+              </div>
+            </div>
+
+            {/* Verbal Ability Card */}
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10 transition-all duration-300 hover:-translate-y-1">
+              <div className="relative h-32 bg-gradient-to-r from-green-400 to-green-600">
+                <div className="absolute -bottom-12 left-1/2 transform -translate-x-1/2">
+                  <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110">
+                    <img 
+                      src="https://img.icons8.com/color/96/000000/reading.png" 
+                      alt="Verbal Logo" 
+                      className="w-20 h-20"
+                    />
+                  </div>
+                </div>
+              </div>
+              <div className="pt-16 pb-6 px-6 text-center">
+                <h3 className="text-2xl font-bold mb-4 text-white">Verbal Ability</h3>
+                <p className="text-purple-100 mb-6">
+                  Enhance reading comprehension, grammar, vocabulary, and communication skills for interviews.
+                </p>
+                <Link to="/learn/verbal" className="inline-block px-6 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all hover:-translate-y-1">
+                  Start Learning
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Featured Courses Section */}
+        {/* <VideoGrid /> */}
+
+        {/* Progress Section */}
+        {currentUser && (
+          <div className="mt-16">
+            <h2 className="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+              Your Progress
+            </h2>
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl overflow-hidden border border-white/10">
+              <div className="flex flex-col md:flex-row">
+                {/* Left side - Image */}
+                <div className="md:w-1/4 bg-gradient-to-r from-indigo-500 to-purple-600 p-8 flex flex-col items-center justify-center">
+                  <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-lg transition-transform duration-300 hover:scale-110">
+                    <img 
+                      src="https://cdn-icons-png.flaticon.com/512/226/226777.png" 
+                      alt="Java Logo" 
+                      className="w-24 h-24"
+                    />
+                  </div>
+                </div>
+
+                {/* Middle - Content */}
+                <div className="md:w-2/4 p-8">
+                  <h3 className="text-2xl font-bold mb-4 text-white">Overall Progress</h3>
+                  <p className="text-purple-100 mb-6">
+                    Track your learning journey across all aptitude modules. Complete challenges, earn badges, and climb the leaderboard.
+                  </p>
+                  <div className="flex gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">0</div>
+                      <div className="text-sm text-purple-200">Challenges Completed</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-white">0</div>
+                      <div className="text-sm text-purple-200">Badges Earned</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-white">0</div>
+                      <div className="text-sm text-purple-200">Leaderboard Rank</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right side - Progress */}
+                <div className="md:w-1/4 bg-white/5 p-8 flex flex-col items-center justify-center">
+                  <div className="flex flex-col items-center">
+                    <ProgressBar progress={progress} color="text-indigo-500" />
+                    <p className="mt-2 text-sm text-purple-200">Overall Progress</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CTA Section */}
+        {!currentUser && (
+          <div className="mt-16 text-center">
+            <div className="bg-white/10 backdrop-blur-sm rounded-xl p-12 border border-white/10">
+              <h2 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-white to-purple-200">
+                Ready to Start Your Placement Journey?
+              </h2>
+              <p className="text-xl text-purple-100 mb-8">
+                Join thousands of learners who are cracking interviews with AptiQuest
+              </p>
+              <Link to="/signup" className="inline-block px-8 py-4 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl font-bold text-lg shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 transition-all hover:-translate-y-1">
+                Create Your Account
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default Home; 
